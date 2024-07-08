@@ -1,0 +1,56 @@
+name: Smoke test
+
+on:
+  workflow_dispatch:
+
+  push:
+    branches:
+      - main
+      - 'release/**'
+      - 'ci/add-smoke-test'
+
+  pull_request:
+    branches:
+      - main
+      - 'release/**'
+
+jobs:
+  smoke-test:
+
+    runs-on: ubuntu-latest
+    strategy:
+      matrix:
+        node: [ 18, 20, 'lts/*', 'current' ]
+    name: Node ${{ matrix.node }}
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: ${{ matrix.node }}
+      - name: Install dependencies
+        run: npm install
+      - name: Update dependencies
+        run: npm update
+      - name: Run build:dev
+        run: npm run build:dev
+      - name: Check server
+        run: |
+          # Kill any existing process running on port 3502
+          if lsof -Pi :3502 -sTCP:LISTEN -t >/dev/null ; then
+              echo "Killing existing process on port 3502"
+              kill $(lsof -t -i:3502)
+          fi
+
+          # Start the server
+          npm run start-dev | tee output.log &
+          while ! grep -q "compiled successfully in" output.log; do
+            sleep 5
+          done
+
+          # Check if the server started successfully
+          if lsof -Pi :3502 -sTCP:LISTEN -t >/dev/null ; then
+              echo "Server is running on port 3502"
+          else
+              echo "Server failed to start"
+              exit 1
+          fi
