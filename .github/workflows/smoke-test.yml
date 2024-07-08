@@ -44,7 +44,6 @@ jobs:
 
           # Start the server
           npm run start-dev | tee output.log &
-          server_pid=$!
 
           # Check if the server started successfully
           if lsof -Pi :3502 -sTCP:LISTEN -t >/dev/null ; then
@@ -53,4 +52,3 @@ jobs:
               echo "Server failed to start"
               exit 1
           fi
-          kill $server_pid
