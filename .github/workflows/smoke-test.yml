@@ -21,6 +21,7 @@ jobs:
     strategy:
       matrix:
         node: [ 18, 20, 'lts/*', 'current' ]
+
     name: Node ${{ matrix.node }}
     steps:
       - uses: actions/checkout@v4
@@ -33,7 +34,7 @@ jobs:
         run: npm update
       - name: Run build:dev
         run: npm run build:dev
-      - name: Check server
+      - name: Check webpack build and start server
         run: |
           # Kill any existing process running on port 3502
           if lsof -Pi :3502 -sTCP:LISTEN -t >/dev/null ; then
